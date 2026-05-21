@@ -64,7 +64,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void MX_GPIO_DeInit(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -112,6 +112,10 @@ int main(void)
   MX_USART2_UART_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay(500);
+  HAL_DBGMCU_DisableDBGStopMode();
+  DBGMCU->CR = 0;
+
   __HAL_RCC_WAKEUPSTOP_CLK_CONFIG(RCC_STOP_WAKEUPCLOCK_MSI);
   /* USER CODE END 2 */
 
@@ -122,14 +126,33 @@ int main(void)
   while (1)
   {
     printf("wake-up.. \r\n");
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
     HAL_Delay(100);
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+    HAL_UART_DeInit(&huart1);
+    HAL_UART_DeInit(&huart2);
+    HAL_I2C_DeInit(&hi2c1);
+    HAL_I2C_DeInit(&hi2c2);
+    HAL_ADC_DeInit(&hadc1);
+    MX_GPIO_DeInit();
 
     HAL_SuspendTick();
 
+    __HAL_RCC_SYSCFG_CLK_DISABLE();
+
     HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
 
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
+
     HAL_ResumeTick();
+
+    MX_GPIO_Init();
+    MX_ADC1_Init();
+    MX_I2C1_Init();
+    MX_I2C2_Init();
+    MX_USART1_UART_Init();
+    MX_USART2_UART_Init();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -539,7 +562,38 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void MX_GPIO_DeInit(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
 
+  /* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+
+
+  GPIO_InitStruct.Pin = GPIO_PIN_ALL;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+
+  __HAL_RCC_GPIOC_CLK_DISABLE();
+  __HAL_RCC_GPIOA_CLK_DISABLE();
+  __HAL_RCC_GPIOB_CLK_DISABLE();
+  __HAL_RCC_GPIOD_CLK_DISABLE();
+  __HAL_RCC_GPIOF_CLK_DISABLE();
+}
 /* USER CODE END 4 */
 
 /**
